@@ -9,14 +9,18 @@ namespace Assignment4
 {
     class CustomerPrQ
     {
-        private struct Data { public string name; public int priorityValue};
+        private struct Data { public string name; public int priorityValue;};
         private const int MaxN = 50;
         private int N;
-        private Data[] _HeapTree;
+        private object[] _HeapTree;
         private StreamReader customerReader;
         private StreamWriter logFile;
         private string []customerRawData;
 
+        /// <summary>
+        /// Starting point for the heap tree
+        /// </summary>
+        /// <param name="logFile"></param>
         public CustomerPrQ(StreamWriter logFile)
         {
             customerReader = new StreamReader("LineAt6Am.csv");
@@ -24,7 +28,10 @@ namespace Assignment4
             N = 0;
         }
 
-
+        //------------------------------------------------------------
+        /// <summary>
+        /// Reads and processes the customer file
+        /// </summary>
         public void SetupPrQ()
         {
             
@@ -32,11 +39,20 @@ namespace Assignment4
             {
                 HeapInsert();
             }
+
+            Console.WriteLine("**initial heap built containing " + N + " nodes");
+
         }
 
-        public void EmptyPrQ()
+        //-------------------------------------------------------------
+        public void EmptyOutPrQ()
         {
-
+            while(HeapIsEmpty() == false)
+            {
+               var customer =  HeapDelete();
+               Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})", 
+                                  customer.name, customer.priorityValue));
+            }
         }
 
         public void InsertCustomerFromPrQ()
@@ -46,12 +62,24 @@ namespace Assignment4
 
         public void RemoveCustomerFromPrQ()
         {
-
+            if (HeapIsEmpty() == false)
+            {
+                var customer = HeapDelete();
+                Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
+                                   customer.name, customer.priorityValue));
+            }
+            else
+            {
+                Console.WriteLine("**heap now empty");
+            }
         }
 
 
         //-----------------------Private Methods--------------------------
-
+        /// <summary>
+        /// Inserts into the the heap tree in a standard walking up method
+        /// </summary>
+        /// <returns></returns>
         private bool HeapInsert()
         {
             int parentI                = 0;
@@ -75,7 +103,7 @@ namespace Assignment4
                     if(parentI > 0)
                     {
                         //Check if parent is higher value than child
-                        if(_HeapTree[parentI].priorityValue > customerTemp.priorityValue)
+                        if(((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
                         {
                             //Swap parent and to its child's location
                             _HeapTree[i] = _HeapTree[parentI];
@@ -89,7 +117,7 @@ namespace Assignment4
                     }
                     else
                     {
-                        if(_HeapTree[0].priorityValue > customerTemp.priorityValue)
+                        if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
                         {
                             _HeapTree[i] = _HeapTree[0];
                             _HeapTree[0] = customerTemp;
@@ -109,11 +137,34 @@ namespace Assignment4
             return true;
         }
 
-        private void HeapDelete()
+        //----------------------------------------------------------------------
+        /// <summary>
+        /// Deletes the root customer from the heap tree. Then walks down, 
+        /// reposisitioning the tree.
+        /// </summary>
+        /// <returns>Removed customer</returns>
+        private Data HeapDelete()
         {
+            int i = 0;
+            int parentI = 0;
+            Data customerDeleted = (Data)_HeapTree[i];
 
+            while((i = SubOfSmallChild(parentI)) != -1)
+            {
+                _HeapTree[parentI] = _HeapTree[i];
+                parentI = i;
+
+            }
+
+            --N;
+            return customerDeleted;
         }
 
+        //-----------------------------------------------------------------------
+        /// <summary>
+        /// Calculates the priority value of the the incomming customer
+        /// </summary>
+        /// <returns>Priority value of the customer</returns>
         private int DeterminePriorityValue()
         {
             int initialValue = 101;
@@ -156,6 +207,60 @@ namespace Assignment4
             }
 
             return initialValue;
+        }
+
+        //--------------------------------------------------------------------
+        /// <summary>
+        /// Determins if heap is full
+        /// </summary>
+        /// <returns>Status of heap</returns>
+        private bool HeapIsFull()
+        {
+            if (N == MaxN)
+                return true;
+
+            return false;
+        }
+
+        //-----------------------------------------------------------------------
+        /// <summary>
+        /// Status of heap
+        /// </summary>
+        /// <returns>empty stastus of heap</returns>
+        private bool HeapIsEmpty()
+        {
+            if (N == 0)
+                return true;
+
+            return false;
+        }
+
+        //----------------------------------------------------------------------
+        /// <summary>
+        /// Calculates the child sub of the lowest priority
+        /// </summary>
+        /// <param name="index">Starting and checking point of parent</param>
+        /// <returns>index of smallest child</returns>
+        private int SubOfSmallChild(int index)
+        {
+            int LChild = (index*2)+1;
+            int RChild = (index*2)+2;
+
+            if (_HeapTree[LChild] != null && _HeapTree[RChild] == null)
+                return LChild;
+            else
+            {
+                if (_HeapTree[LChild] == null && _HeapTree[RChild] != null)
+                    return RChild;
+                else
+                {
+                    if (((Data)_HeapTree[LChild]).priorityValue > ((Data)_HeapTree[RChild]).priorityValue)
+                        return RChild;
+                    else
+                        return LChild;
+                }
+            }
+
         }
 
         //-----------------------------------------------------------------------
