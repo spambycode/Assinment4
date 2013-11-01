@@ -1,4 +1,18 @@
-﻿using System;
+﻿/*Author: George Karaszi
+ * Assignment 4 Heap Tree's
+ * 
+ * File's Accessed: (in) Events.csv    -Store event information
+ *                  (out) log.txt      -Verbose information about the program
+ *                  
+ * Description: Reads the events file and processes the information by passing
+ * commands to the customerPqr structure. That handles the day to day task of 
+ * the store and its heap tree.
+ * 
+ * 
+ */
+
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,9 +28,11 @@ namespace Assignment4
 
         static void Main(string[] args)
         {
-            customer    = new CustomerPrQ();
+            ;
             eventReader = new StreamReader("event.csv");
             logWritter  = new StreamWriter("log.txt", false);
+            customer    = new CustomerPrQ(logWritter);
+            customer.SetupPrQ();
 
             HandelEvents();
 
@@ -28,29 +44,50 @@ namespace Assignment4
         /// </summary>
         static void HandelEvents()
         {
-            int status = -1;
+            List <string>lineEvent;
 
-            while(ReadLine())
+            while ((lineEvent = ReadLine()) != null)
             {
-               
+               switch(lineEvent[0].ToUpper())
+               {
+                   case "OPENSTORE":
+                       customer.SetupPrQ();
+                       break;
+                   case "CLOSESTORE":
+                       customer.EmptyOutPrQ();
+                       break;
+                   case "NEWCUSTOMER":
+                       lineEvent.RemoveAt(0);
+                       customer.InsertCustomerFromPrQ(lineEvent.ToArray());
+                       break;
+                   case "SERVECUSTOMER":
+                       customer.RemoveCustomerFromPrQ();
+                       break;
+                   default:
+                       break;
+               }
             }
         }
 
-        private static bool ReadLine()
+        //------------------------------------------------------------------------
+        /// <summary>
+        /// Reads a line in the event's file.
+        /// </summary>
+        /// <returns>The command in a list format</returns>
+        private static List<string> ReadLine()
         {
             string lineRead;
-
+            
             while(eventReader.EndOfStream != true)
             {
                 lineRead = eventReader.ReadLine();
-                var lineSplit = lineRead.Split(',');
+                string []lineSplit = lineRead.Split(',');
 
-                if (lineSplit.Length >= 2)
-                    return true;
+                return new List<string>(lineSplit);
 
             }
 
-            return false;
+            return null;
         }
 
     }

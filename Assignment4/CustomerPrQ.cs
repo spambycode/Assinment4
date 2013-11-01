@@ -1,4 +1,19 @@
-﻿using System;
+﻿/*Author: George Karaszi
+ * Assignment 4 Heap Tree's
+ * 
+ * File's Accessed: (in) LineAt6Am.csv -Customer Raw Data
+ *                  (out) log.txt      -Verbose information about the program
+ *                  
+ * Description: A heap tree structure based on priority values. Each customer to 
+ * the shop is assigned a priority value and is placed according, in ascending order.
+ * The priority values are determined by a persons age, VIP status, and employee status 
+ * in the company.The lower the customers priority value is, the higher the customer 
+ * is placed in the stack.
+ * 
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +30,7 @@ namespace Assignment4
         private object[] _HeapTree;
         private StreamReader customerReader;
         private StreamWriter logFile;
-        private string []customerRawData;
+        private string[] customerRawData;
 
         /// <summary>
         /// Starting point for the heap tree
@@ -24,6 +39,7 @@ namespace Assignment4
         public CustomerPrQ(StreamWriter logFile)
         {
             customerReader = new StreamReader("LineAt6Am.csv");
+            _HeapTree = new object[MaxN];
             this.logFile = logFile;
             N = 0;
         }
@@ -34,10 +50,18 @@ namespace Assignment4
         /// </summary>
         public void SetupPrQ()
         {
-            
-            while(ReadLine())
+
+            string lineRead;
+
+            while (customerReader.EndOfStream != true)
             {
-                HeapInsert();
+                lineRead = customerReader.ReadLine();
+                var lineSplit = lineRead.Split(',');
+
+                if (lineSplit.Length >= 2)
+                {
+                    HeapInsert(lineSplit);
+                }
             }
 
             Console.WriteLine("**initial heap built containing " + N + " nodes");
@@ -47,19 +71,33 @@ namespace Assignment4
         //-------------------------------------------------------------
         public void EmptyOutPrQ()
         {
-            while(HeapIsEmpty() == false)
+            while (HeapIsEmpty() == false)
             {
-               var customer =  HeapDelete();
-               Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})", 
-                                  customer.name, customer.priorityValue));
+                var customer = HeapDelete();
+                Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
+                                   customer.name, customer.priorityValue));
             }
         }
 
-        public void InsertCustomerFromPrQ()
+        //------------------------------------------------------------------------------
+        /// <summary>
+        /// Inserts a customer from a command
+        /// </summary>
+        public void InsertCustomerFromPrQ(string  []customerData)
         {
+            if (HeapIsFull() == false)
+            {
+                var customer = HeapInsert(customerData);
+                Console.WriteLine(string.Format("NEW CUSTOMER: {0} ({1})", 
+                                  customer.name, customer.priorityValue));
+            }
 
         }
 
+        //-------------------------------------------------------------------------------
+        /// <summary>
+        /// Removes a single customer from the top stack.
+        /// </summary>
         public void RemoveCustomerFromPrQ()
         {
             if (HeapIsEmpty() == false)
@@ -68,10 +106,6 @@ namespace Assignment4
                 Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
                                    customer.name, customer.priorityValue));
             }
-            else
-            {
-                Console.WriteLine("**heap now empty");
-            }
         }
 
 
@@ -79,31 +113,33 @@ namespace Assignment4
         /// <summary>
         /// Inserts into the the heap tree in a standard walking up method
         /// </summary>
-        /// <returns></returns>
-        private bool HeapInsert()
+        /// <param name="CustomerData">Rawdata about the customer</param>
+        /// <returns>Inserted Customer data</returns>
+        private Data HeapInsert(string[] CustomerData)
         {
-            int parentI                = 0;
-            Data customerTemp          = new Data();
-            customerTemp.name          = customerRawData[0];
-            customerTemp.priorityValue = DeterminePriorityValue();
+            int parentI = 0;
+            int i       = N;
+            Data customerTemp = new Data();
+            customerTemp.name = CustomerData[0];
+            customerTemp.priorityValue = DeterminePriorityValue(CustomerData);
 
-            if(N == 0)
+            if (N == 0)
             {
-               _HeapTree[N] = customerTemp; 
+                _HeapTree[N] = customerTemp;
             }
             else
             {
-                //Shift heap tree, to place the smallest value in the a walking up fastsion.
-                for(int i = N; i >= 0;)
+                //Shift heap tree, to place the smallest value in a walking up fashion.
+                while (i >= 0)
                 {
-                    //Calcualting parent
-                    parentI = (i-1)/2;
+                    //Calculating parent
+                    parentI = (i - 1) / 2;
 
-                    //There is a speical case when ever the parent is zero (root)
-                    if(parentI > 0)
+                    //There is a special case when ever the parent is zero (root)
+                    if (parentI > 0)
                     {
                         //Check if parent is higher value than child
-                        if(((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
+                        if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
                         {
                             //Swap parent and to its child's location
                             _HeapTree[i] = _HeapTree[parentI];
@@ -132,15 +168,20 @@ namespace Assignment4
                 }
 
             }
+            
 
-            N = N + 1;
-            return true;
+            ++N;
+
+            Console.WriteLine("New Customer: " + customerTemp.name +
+                              "(" + customerTemp.priorityValue + ")");
+
+            return customerTemp;
         }
 
         //----------------------------------------------------------------------
         /// <summary>
         /// Deletes the root customer from the heap tree. Then walks down, 
-        /// reposisitioning the tree.
+        /// repositioning the tree.
         /// </summary>
         /// <returns>Removed customer</returns>
         private Data HeapDelete()
@@ -149,7 +190,7 @@ namespace Assignment4
             int parentI = 0;
             Data customerDeleted = (Data)_HeapTree[i];
 
-            while((i = SubOfSmallChild(parentI)) != -1)
+            while ((i = SubOfSmallChild(parentI)) != -1)
             {
                 _HeapTree[parentI] = _HeapTree[i];
                 parentI = i;
@@ -162,23 +203,24 @@ namespace Assignment4
 
         //-----------------------------------------------------------------------
         /// <summary>
-        /// Calculates the priority value of the the incomming customer
+        /// Calculates the priority value of the the incoming customer
         /// </summary>
+        /// <param name="CustomerData">Raw data of the customer</param>
         /// <returns>Priority value of the customer</returns>
-        private int DeterminePriorityValue()
+        private int DeterminePriorityValue(string[] CustomerData)
         {
             int initialValue = 101;
             int age;
 
-            foreach(string s in customerRawData)
+            foreach (string s in CustomerData)
             {
-                if(Int32.TryParse(s, out age) == true)
+                if (Int32.TryParse(s, out age) == true)
                 {
-                    if(age >= 65)
+                    if (age >= 65)
                     {
                         initialValue -= 15;
 
-                        if(age >= 80)
+                        if (age >= 80)
                         {
                             initialValue -= 15;
                         }
@@ -186,7 +228,7 @@ namespace Assignment4
                 }
                 else
                 {
-                    switch(s.ToUpper())
+                    switch (s.ToUpper())
                     {
                         case "EMPLOYEE":
                             initialValue -= 25;
@@ -211,13 +253,16 @@ namespace Assignment4
 
         //--------------------------------------------------------------------
         /// <summary>
-        /// Determins if heap is full
+        /// Determines if heap is full
         /// </summary>
         /// <returns>Status of heap</returns>
         private bool HeapIsFull()
         {
             if (N == MaxN)
+            {
+                Console.WriteLine("**Heap tree is full");
                 return true;
+            }
 
             return false;
         }
@@ -226,11 +271,14 @@ namespace Assignment4
         /// <summary>
         /// Status of heap
         /// </summary>
-        /// <returns>empty stastus of heap</returns>
+        /// <returns>empty status of heap</returns>
         private bool HeapIsEmpty()
         {
             if (N == 0)
+            {
+                Console.WriteLine("**heap is now empty");
                 return true;
+            }
 
             return false;
         }
@@ -243,8 +291,8 @@ namespace Assignment4
         /// <returns>index of smallest child</returns>
         private int SubOfSmallChild(int index)
         {
-            int LChild = (index*2)+1;
-            int RChild = (index*2)+2;
+            int LChild = (index * 2) + 1;
+            int RChild = (index * 2) + 2;
 
             if (_HeapTree[LChild] != null && _HeapTree[RChild] == null)
                 return LChild;
@@ -262,31 +310,5 @@ namespace Assignment4
             }
 
         }
-
-        //-----------------------------------------------------------------------
-        /// <summary>
-        /// Reads each line the of customer file
-        /// </summary>
-        /// <returns>Status of the EOF</returns>
-
-        private bool ReadLine()
-        {
-            string lineRead;
-
-            while (customerReader.EndOfStream != true)
-            {
-                lineRead = customerReader.ReadLine();
-                var lineSplit = lineRead.Split(',');
-
-                if (lineSplit.Length >= 2)
-                {
-                    customerRawData = lineSplit;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
     }
 }
