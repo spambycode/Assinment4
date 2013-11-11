@@ -29,13 +29,14 @@ namespace Assignment4
         static void Main(string[] args)
         {
             ;
-            eventReader = new StreamReader("event.csv");
+            eventReader = new StreamReader("events.txt");
             logWritter  = new StreamWriter("log.txt", false);
             customer    = new CustomerPrQ(logWritter);
-            customer.SetupPrQ();
 
             HandelEvents();
 
+
+            logWritter.Close();
         }
 
         //---------------------------------------------------------------
@@ -44,7 +45,9 @@ namespace Assignment4
         /// </summary>
         static void HandelEvents()
         {
-            List <string>lineEvent;
+            List<string> lineEvent;
+
+            logWritter.WriteLine("**Crowd Organizer App starting");
 
             while ((lineEvent = ReadLine()) != null)
             {
@@ -60,13 +63,16 @@ namespace Assignment4
                        lineEvent.RemoveAt(0);
                        customer.InsertCustomerFromPrQ(lineEvent.ToArray());
                        break;
-                   case "SERVECUSTOMER":
+                   case "SERVEACUSTOMER":
                        customer.RemoveCustomerFromPrQ();
                        break;
                    default:
                        break;
                }
             }
+
+
+            logWritter.WriteLine("**Crowd Organizer App stopping");
         }
 
         //------------------------------------------------------------------------
@@ -81,10 +87,9 @@ namespace Assignment4
             while(eventReader.EndOfStream != true)
             {
                 lineRead = eventReader.ReadLine();
-                string []lineSplit = lineRead.Split(',');
+                var lineSplit = new List<string> (lineRead.Split(','));
 
-                return new List<string>(lineSplit);
-
+                return lineSplit;
             }
 
             return null;

@@ -30,7 +30,7 @@ namespace Assignment4
         private object[] _HeapTree;
         private StreamReader customerReader;
         private StreamWriter logFile;
-        private string[] customerRawData;
+        private int _coustomerCount;
 
         /// <summary>
         /// Starting point for the heap tree
@@ -41,7 +41,7 @@ namespace Assignment4
             customerReader = new StreamReader("LineAt6Am.csv");
             _HeapTree = new object[MaxN];
             this.logFile = logFile;
-            N = 0;
+            _coustomerCount = N = 0;
         }
 
         //------------------------------------------------------------
@@ -56,6 +56,8 @@ namespace Assignment4
             while (customerReader.EndOfStream != true)
             {
                 lineRead = customerReader.ReadLine();
+                if (lineRead.Contains("//"))
+                    continue;
                 var lineSplit = lineRead.Split(',');
 
                 if (lineSplit.Length >= 2)
@@ -63,18 +65,18 @@ namespace Assignment4
                     HeapInsert(lineSplit);
                 }
             }
-
-            Console.WriteLine("**initial heap built containing " + N + " nodes");
-
+            logFile.WriteLine("Store Opening...");
+            logFile.WriteLine("**initial heap built containing " + N + " nodes");
         }
 
         //-------------------------------------------------------------
         public void EmptyOutPrQ()
         {
+            logFile.WriteLine("Closing Store...................");
             while (HeapIsEmpty() == false)
             {
                 var customer = HeapDelete();
-                Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
+                logFile.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
                                    customer.name, customer.priorityValue));
             }
         }
@@ -88,7 +90,7 @@ namespace Assignment4
             if (HeapIsFull() == false)
             {
                 var customer = HeapInsert(customerData);
-                Console.WriteLine(string.Format("NEW CUSTOMER: {0} ({1})", 
+                logFile.WriteLine(string.Format("NEW CUSTOMER: {0} ({1})", 
                                   customer.name, customer.priorityValue));
             }
 
@@ -103,7 +105,7 @@ namespace Assignment4
             if (HeapIsEmpty() == false)
             {
                 var customer = HeapDelete();
-                Console.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
+                logFile.WriteLine(string.Format("SERVE CUSTOMER: {0} ({1})",
                                    customer.name, customer.priorityValue));
             }
         }
@@ -172,9 +174,6 @@ namespace Assignment4
 
             ++N;
 
-            Console.WriteLine("New Customer: " + customerTemp.name +
-                              "(" + customerTemp.priorityValue + ")");
-
             return customerTemp;
         }
 
@@ -186,19 +185,35 @@ namespace Assignment4
         /// <returns>Removed customer</returns>
         private Data HeapDelete()
         {
-            int i = 0;
-            int parentI = 0;
-            Data customerDeleted = (Data)_HeapTree[i];
+            Data customerDeleted = (Data)_HeapTree[0];
 
-            while ((i = SubOfSmallChild(parentI)) != -1)
+            _HeapTree[0] = _HeapTree[N - 1];
+            --N;
+            WalkDown();
+
+            return customerDeleted;
+        }
+
+        //-----------------------------------------------------------------------------
+        /// <summary>
+        /// Walks down the the tree re orgaizing it from top down
+        /// </summary>
+        private void WalkDown()
+        {
+            object SwapObject;
+            int i = 0;
+            int smChild = 0;
+
+            while ((2 * i + 1) <= (N - 1) && ((Data)_HeapTree[i]).priorityValue > ((Data)_HeapTree[smChild]).priorityValue)
             {
-                _HeapTree[parentI] = _HeapTree[i];
-                parentI = i;
+                SwapObject = _HeapTree[i];
+                _HeapTree[i] = _HeapTree[smChild];
+                _HeapTree[smChild] = SwapObject;
+
+                i = smChild;
+                i = SubOfSmallChild(i);
 
             }
-
-            --N;
-            return customerDeleted;
         }
 
         //-----------------------------------------------------------------------
@@ -209,7 +224,7 @@ namespace Assignment4
         /// <returns>Priority value of the customer</returns>
         private int DeterminePriorityValue(string[] CustomerData)
         {
-            int initialValue = 101;
+            int initialValue = 101 + _coustomerCount++;
             int age;
 
             foreach (string s in CustomerData)
@@ -260,7 +275,7 @@ namespace Assignment4
         {
             if (N == MaxN)
             {
-                Console.WriteLine("**Heap tree is full");
+                logFile.WriteLine("**Heap tree is full");
                 return true;
             }
 
@@ -276,7 +291,7 @@ namespace Assignment4
         {
             if (N == 0)
             {
-                Console.WriteLine("**heap is now empty");
+                logFile.WriteLine("**heap now empty");
                 return true;
             }
 
@@ -294,20 +309,10 @@ namespace Assignment4
             int LChild = (index * 2) + 1;
             int RChild = (index * 2) + 2;
 
-            if (_HeapTree[LChild] != null && _HeapTree[RChild] == null)
+            if ((LChild > (N - 1) || ((Data)_HeapTree[LChild]).priorityValue <= ((Data)_HeapTree[RChild]).priorityValue))
                 return LChild;
             else
-            {
-                if (_HeapTree[LChild] == null && _HeapTree[RChild] != null)
-                    return RChild;
-                else
-                {
-                    if (((Data)_HeapTree[LChild]).priorityValue > ((Data)_HeapTree[RChild]).priorityValue)
-                        return RChild;
-                    else
-                        return LChild;
-                }
-            }
+                return RChild;
 
         }
     }
