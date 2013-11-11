@@ -187,11 +187,52 @@ namespace Assignment4
         {
             Data customerDeleted = (Data)_HeapTree[0];
 
+            object SwapObject;
+           // SwapObject = _HeapTree[N - 1];
             _HeapTree[0] = _HeapTree[N - 1];
             --N;
-            WalkDown();
+            int i = 0;
+            int smChild = 0;
+
+            //if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
+
+
+/*             while ((2 * i + 1) <= (N - 1))
+             {
+                 if(((Data)_HeapTree[i]).priorityValue > ((Data)_HeapTree[smChild]).priorityValue)
+                 {
+                     SwapObject = _HeapTree[i];
+                     _HeapTree[i] = _HeapTree[smChild];
+                     _HeapTree[smChild] = _HeapTree[i];
+                 }
+             }*/
+
+            while ((2 * i + 1) <= (N - 1) && ((Data)_HeapTree[i]).priorityValue >= ((Data)_HeapTree[smChild]).priorityValue)
+            {
+                SwapObject = _HeapTree[i];
+                _HeapTree[i] = _HeapTree[smChild];
+                _HeapTree[smChild] = SwapObject;
+
+                i = smChild;
+                smChild = SubOfSmallChild(i);
+
+            }
+
+            printTree();
+
+            //WalkDown();
 
             return customerDeleted;
+        }
+
+        private void printTree()
+        {
+            for(int i = 0 ; i < N; i++)
+            {
+                Console.WriteLine("{0} {1}", ((Data)_HeapTree[i]).name, ((Data)_HeapTree[i]).priorityValue);
+            }
+
+            Console.ReadLine();
         }
 
         //-----------------------------------------------------------------------------
@@ -309,7 +350,7 @@ namespace Assignment4
             int LChild = (index * 2) + 1;
             int RChild = (index * 2) + 2;
 
-            if ((LChild > (N - 1) || ((Data)_HeapTree[LChild]).priorityValue <= ((Data)_HeapTree[RChild]).priorityValue))
+            if ((LChild > (N - 1) || ((Data)_HeapTree[LChild]).priorityValue < ((Data)_HeapTree[RChild]).priorityValue))
                 return LChild;
             else
                 return RChild;
