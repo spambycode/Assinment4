@@ -119,8 +119,6 @@ namespace Assignment4
         /// <returns>Inserted Customer data</returns>
         private Data HeapInsert(string[] CustomerData)
         {
-            int parentI = 0;
-            int i       = N;
             Data customerTemp = new Data();
             customerTemp.name = CustomerData[0];
             customerTemp.priorityValue = DeterminePriorityValue(CustomerData);
@@ -132,42 +130,7 @@ namespace Assignment4
             else
             {
                 //Shift heap tree, to place the smallest value in a walking up fashion.
-                while (i >= 0)
-                {
-                    //Calculating parent
-                    parentI = (i - 1) / 2;
-
-                    //There is a special case when ever the parent is zero (root)
-                    if (parentI > 0)
-                    {
-                        //Check if parent is higher value than child
-                        if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
-                        {
-                            //Swap parent and to its child's location
-                            _HeapTree[i] = _HeapTree[parentI];
-                            i = parentI;
-                        }
-                        else //found the correct location t place the new node
-                        {
-                            _HeapTree[i] = customerTemp;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
-                        {
-                            _HeapTree[i] = _HeapTree[0];
-                            _HeapTree[0] = customerTemp;
-                        }
-                        else
-                        {
-                            _HeapTree[i] = customerTemp;
-                        }
-                        break;
-                    }
-
-                }
+                WalkUp(customerTemp);
 
             }
             
@@ -186,26 +149,71 @@ namespace Assignment4
         private Data HeapDelete()
         {
             Data customerDeleted = (Data)_HeapTree[0];
-
-            object SwapObject;
-           // SwapObject = _HeapTree[N - 1];
             _HeapTree[0] = _HeapTree[N - 1];
             --N;
+
+            WalkDown();
+
+            return customerDeleted;
+        }
+
+        //----------------------------------------------------------------------------
+        /// <summary>
+        /// Walks the customer that needs to be placed in a higher queue
+        /// </summary>
+        /// <param name="CustomerData">Data that needs to be inserted</param>
+        private void WalkUp(Data CustomerData)
+        {
+            int parentI = 0;
+            int i       = N;
+
+            while (i >= 0)
+            {
+                //Calculating parent
+                parentI = (i - 1) / 2;
+
+                //There is a special case when ever the parent is zero (root)
+                if (parentI > 0)
+                {
+                    //Check if parent is higher value than child
+                    if (((Data)_HeapTree[parentI]).priorityValue > CustomerData.priorityValue)
+                    {
+                        //Swap parent and to its child's location
+                        _HeapTree[i] = _HeapTree[parentI];
+                        i = parentI;
+                    }
+                    else //found the correct location t place the new node
+                    {
+                        _HeapTree[i] = CustomerData;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (((Data)_HeapTree[parentI]).priorityValue > CustomerData.priorityValue)
+                    {
+                        _HeapTree[i] = _HeapTree[0];
+                        _HeapTree[0] = CustomerData;
+                    }
+                    else
+                    {
+                        _HeapTree[i] = CustomerData;
+                    }
+                    break;
+
+                }
+            }
+        }
+
+        //-----------------------------------------------------------------------------
+        /// <summary>
+        /// Walks down the the tree re organizing it from top down
+        /// </summary>
+        private void WalkDown()
+        {
+            object SwapObject;
             int i = 0;
             int smChild = 0;
-
-            //if (((Data)_HeapTree[parentI]).priorityValue > customerTemp.priorityValue)
-
-
-/*             while ((2 * i + 1) <= (N - 1))
-             {
-                 if(((Data)_HeapTree[i]).priorityValue > ((Data)_HeapTree[smChild]).priorityValue)
-                 {
-                     SwapObject = _HeapTree[i];
-                     _HeapTree[i] = _HeapTree[smChild];
-                     _HeapTree[smChild] = _HeapTree[i];
-                 }
-             }*/
 
             while ((2 * i + 1) <= (N - 1) && ((Data)_HeapTree[i]).priorityValue >= ((Data)_HeapTree[smChild]).priorityValue)
             {
@@ -215,44 +223,6 @@ namespace Assignment4
 
                 i = smChild;
                 smChild = SubOfSmallChild(i);
-
-            }
-
-            printTree();
-
-            //WalkDown();
-
-            return customerDeleted;
-        }
-
-        private void printTree()
-        {
-            for(int i = 0 ; i < N; i++)
-            {
-                Console.WriteLine("{0} {1}", ((Data)_HeapTree[i]).name, ((Data)_HeapTree[i]).priorityValue);
-            }
-
-            Console.ReadLine();
-        }
-
-        //-----------------------------------------------------------------------------
-        /// <summary>
-        /// Walks down the the tree re orgaizing it from top down
-        /// </summary>
-        private void WalkDown()
-        {
-            object SwapObject;
-            int i = 0;
-            int smChild = 0;
-
-            while ((2 * i + 1) <= (N - 1) && ((Data)_HeapTree[i]).priorityValue > ((Data)_HeapTree[smChild]).priorityValue)
-            {
-                SwapObject = _HeapTree[i];
-                _HeapTree[i] = _HeapTree[smChild];
-                _HeapTree[smChild] = SwapObject;
-
-                i = smChild;
-                i = SubOfSmallChild(i);
 
             }
         }
@@ -350,7 +320,8 @@ namespace Assignment4
             int LChild = (index * 2) + 1;
             int RChild = (index * 2) + 2;
 
-            if ((LChild > (N - 1) || ((Data)_HeapTree[LChild]).priorityValue < ((Data)_HeapTree[RChild]).priorityValue))
+            if ((LChild > (N - 1) || 
+((Data)_HeapTree[LChild]).priorityValue < ((Data)_HeapTree[RChild]).priorityValue))
                 return LChild;
             else
                 return RChild;
